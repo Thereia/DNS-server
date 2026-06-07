@@ -1,0 +1,159 @@
+=== Slide 1 ===
+Title: 《计算机网络》课程设计 蒋砚军、吴起凡 Email: qfwu@bupt.edu.cn
+
+=== Slide 2 ===
+Title: 课程题目
+[1] 
+
+=== Slide 3 ===
+Title: 题目：DNS中继服务器的实现
+[1] 设计一个DNS服务器程序，读入“域名-IP地址”对照表（一个文件），当客户端查询域名对应的IP地址时，用域名检索该对照表，得到三种检索结果： | 检索结果为ip地址0.0.0.0，则向客户端返回“域名不存在”的报错消息（不良网站拦截功能） | 检索结果为普通IP地址，则向客户返回这个地址（服务器功能） | 表中未检到该域名，则向因特网DNS服务器发出查询，并将结果返给客户端（中继功能） | 考虑多个计算机上的客户端会同时查询，需要进行消息ID的转换
+
+=== Slide 4 ===
+Title: 关于自选题目
+[1] 自选题目提前备案 | 通过QQ群在第9-10周公开报上题目，批准后可以不做指定题目 | 自选题目总数不超过3题，先到先得，并在QQ群上公开审批结果 | 除提出题目者以外，不超过2组同学可申请同一道自选题目，先到先得 | 自选题目必须是“计算机网络协议”相关内容（不要把精力过分用在花梢的界面上）。例如： | 通过程序发送和接收E-mail | FTP Server/Client (YACC命令分析？） | 网络流量嗅探，ARP欺骗 | 分析与计算机网络相关的开源软件
+
+=== Slide 5 ===
+Title: 课程组织
+[1] 
+
+=== Slide 6 ===
+Title: 课程安排
+[1] 分组 | 指定题目2-3人一组。 | 自选题目2-5人一组。 | 提交的程序必须是小组所有同学都能消化的部分，能经得起质疑。 | 课程QQ群： 群号 1038029074 | 课程资料 | 内容：课件、RFC文档等资料、分组名单样例、实验报告模板及实验报告提交模板。 | 稍晚发布。
+
+=== Slide 7 ===
+Title: 课程安排
+[1] 时间安排 | 课堂讲解1次 | 其他时间自己编程实现 | 暂定验收时间15-16周 | 实验环境 | 操作系统Windows，Ubuntu，… | 编程语言C（只可使用C标准库和Socket库，其它任何需要，如LRU或者字典操作等都自己编程实现） | 答疑 | 时间地点：QQ、电话、短信或邮件预约 | 注意事项：提前规划好如何展示你程序开发环境和程序 | 联系方式 | QQ群 | 电话及Email
+
+=== Slide 8 ===
+Title: 提交内容
+[1] 电子版 | 源代码+实验报告（ 实验报告必须是Word格式） | 收集方式 | 由大班学习委员将全班同学的电子版资料收齐，通过百度网盘等给我。 | 一组同学一个子目录，目录名样式为： | 0617-张三-1309-李四 | （解释为：06班班内学号17名字张三，13班班内学号9名字李四，还可以有更多人一组，也可以一人一组） | 务必删除Debug目录和中间生成的文件(OBJ/EXE/PCH等)，仅保留源代码文件及诸如测试用例等辅助成分 | 多个同学一组时，子目录命名按“班号+序号”排序取名；跨班合作，只加入班号最小者的班内汇总资料 | 学习委员务必将目录名按照上述要求规范化 | 实验报告放在子目录内，并且与子目录同名 | 例如0617-张三-1309-李四.docx
+Notes: 其它：分级汇总和逾期提交 |
+
+=== Slide 9 ===
+Title: 课程设计报告内容
+[1] 系统的功能设计 | 模块划分 | 软件流程图 | 测试用例以及运行结果 | 调试中遇到并解决的问题 | 心得体会 |
+Notes: 封面后就是上述内容
+
+=== Slide 10 ===
+Title: 成绩评定
+[1] 分两个部分 | 现场验收 | 携带纸版《课程设计报告封面》（A4纸1页） | 携带笔记本电脑，含程序开发环境和源程序 | 现场接受教师面对面质疑 | 教师可选择背对背为你的程序人为设置BUG，现场调试 | 按教师要求现场增加新功能，必须立刻编程实现 | 注意 | 现场调试时间有限，调试BUG和设计新程序功能，短时间内不成功也可以，但思路必须正确 | 有可能验收过程全程录音，小心专家抽查 | 提交电子版资料 | 提供完整电子版课程设计报告（验收前提交） | 源程序 |
+
+=== Slide 11 ===
+Title: DNS协议简介
+[1] 
+
+=== Slide 12 ===
+Title: DNS协议的位置
+[1] | 1、OSI体系结构分为7层：物理层、链路层、网路层、传输层、会话层、表示层、应用层。 | | 2、TCP/IP的体系结构分为4层：网络接口层(物理层、链路层)、网际层(网络层IP)、传输层(UDP/TCP)、应用层(会话层、表示层、应用层) |
+
+=== Slide 13 ===
+Title: DNS的树形结构
+[1] | | | | | | | | | | DNS数据必须是分布式数据库 | 带来的查询问题：备份、同步、找不到？Cache | 并发访问多个DNS
+Images: 1
+
+=== Slide 14 ===
+Title: 用户程序如何使用DNS
+[1] | | | | | | | | | | DNS协议：Resolver DNS,DNS DNS | User query和user response? | 中继服务器的位置？
+Notes: 中继服务器是DNS Server。
+Images: 1
+
+=== Slide 15 ===
+Title: DNS查询过程
+[1] 1.先在本地DNS解析器缓存里面查找(没找到下一步) | 2.在本地hosts文件中查找 | 3.在本地DNS服务器的缓存里面查找 | 4.在本地DNS服务器的域中查找 | 5.在根域中迭代查找 | 6.在ISP供应商处查找
+Images: 1
+
+=== Slide 16 ===
+Title: DNS查询过程
+[1] 1.客户端向DNS服务器发起查询请求。 | 2.DNS搜索本地解析库没有结果。向根域发起查询请求，根域告诉DNS服务器，.com服务器上有它需要的资源。 | 3.DNS服务器又向.com服务器发起请求，.com服务器告诉DNS服务器，.google.com上有它需要的资源。 | 4.DNS服务器又向.google.com服务器发起请求，得到解析记录，并返回给了客户端。 | 用户提供一种名称，查询以得到另一种名称： | 域名→IP或IP→域名。
+Images: 1
+
+=== Slide 17 ===
+Title: DNS的报文构成(RFC1035 4.1)
+[1] 由5部分构成，除Header外其余四部分为可变长度 |
+[2] RFC1034: DOMAIN NAMES - CONCEPTS AND FACILITIES | RFC1035: DOMAIN NAMES - IMPLEMENTATION AND SPECIFICATION |
+Images: 1
+
+=== Slide 18 ===
+Title: DNS的报文格式
+[1] 整个报文由5部分构成 | 固定长度的Header部分 | Question：the question for the name server | Answer： RRs answering the question | Authority：RRs pointing toward an authority | Additional：RRs holding additional information | 后三段格式相同，每段都是由0~n个资源记录(Resource Record)构成
+
+=== Slide 19 ===
+Title: Header Section Format (4.1.1)
+Notes: | **Transaction ID** | 2字节 | 事务ID，用于匹配请求和响应。 | | | | **Flags** | 2字节 | 标志位| | | | **QDCOUNT** | 2字节 | 问题部分（Question）的记录数。 | | | **ANCOUNT** | 2字节 | 回答部分（Answer）的资源记录数。 | | | **NSCOUNT** | 2字节 | 权威部分（Authority）的资源记录数。 | | | **ARCOUNT** | 2字节 | 附加部分（Additional）的资源记录数。 | | | 共12字节
+Images: 1
+
+=== Slide 20 ===
+Title: 报头字段(1)
+[1] ID | 由客户程序设置并由服务器返回结果。客户程序通过它来确定响应与查询是否匹配 | QR：0表示查询报，1表示响应报。 | OPCODE | 通常值为0（标准查询），其他值为1（反向查询）和2（服务器状态请求）。 | AA: 权威答案(Authoritative answer) | TC: 截断的(Truncated ) | 应答的总长度超512字节时，只返回前512个字节 | RD: 期望递归(Recursion desired) | 查询报中设置，响应报中返回 | 告诉名字服务器处理递归查询。如果该位为0，且被请求的名字服务器没有一个权威回答，就返回一个能解答该查询的其他名字服务器列表，这称为迭代查询 | RA：递归可用(Recursion Available) | 如果名字服务器支持递归查询，则在响应中该比特置为1
+Notes: **QR**（1位）：0表示查询，1表示响应。 | **OPCode**（4位）：操作类型（0为标准查询，1为反向查询，2为服务器状态请求）。 | **AA**（1位）：权威应答（仅响应有效）。 | **TC**（1位）：截断标志（报文过长时被截断）。 | **RD**（1位）：递归查询请求（客户端期望递归解析）。 | **RA**（1位）：递归可用（服务器支持递归查询）。 | **Z**（3位）：保留字段，通常为0。 | **RCode**（4位）：响应码（0无错误，3表示域名不存在等）。 | |
+
+=== Slide 21 ===
+Title: 报头字段(2)
+[1] Z：必须为0，保留字段 | RCODE: 响应码(Response coded)，仅用于响应报 | 值为0(没有差错) | 值为3表示名字差错。从权威名字服务器返回，表示在查询中指定域名不存在 | QDCOUNT | Number of entries in the question section | ANCOUNT | Number of RRs in the answer section | NSCOUNT | Number of name server RRs in authority records section | ARCOUNT | Number of RRs in additional records section
+
+=== Slide 22 ===
+Title: Question Section Format (RFC1035 4.1.2)
+[1] QNAME | A domain name, i.e. www.bupt.edu.cn | QTYPE | A two octet code, type of the query, i.e. A(1),MX(15),CNAME(5),PTR(12),... | QCLASS | A two octet code, class of the query, i.e. IN(1)
+Notes: QNAME = 长度+字符串+。。。+长度+字符串+0，点是不出现的。 | QTYPE：Type的超集。 | AXFR 252 A request for a transfer of an entire zone | MAILB 253 A request for mailbox-related records (MB, MG or MR) | MAILA 254 A request for mail agent RRs (Obsolete - see MX) | * 255 A request for all records | 3.2.4. CLASS | QCLASS：
+Images: 1
+
+=== Slide 23 ===
+Title: Resource Record Format (RFC1035 4.1.3)
+Notes: NAME：拥有者名字，或者说RDATA属于它，例如一个域名，RDATA是一个IP地址 | TYPE：数据类型 | TTL：最大缓存时间长度 | RDLENGTH：数据长度 | RDATA：实际数据
+Images: 1
+
+=== Slide 24 ===
+Title: Resource Record Format
+[1] NAME: 名字 | TYPE: RR的类型码(详见3.2，3.4) | CLASS: 通常为IN(1)，指Internet数据 | TTL | 客户程序保留该资源记录的秒数，稳定的资源记录生存时间值可以为2天，它确定了客户端DNS cache可以缓存该记录多长时间 | RDLENGTH：资源数据长度 | 说明资源数据的字节数，对类型1（TYPE A记录）资源数据是4字节的IP地址 | RDATA：资源数据
+
+=== Slide 25 ===
+Title: Resource Record Data (RFC1035 3.3 & 3.4)
+[1] 资源记录，大约2 0种不同类型的资源记录 | A 地址 (Type 1) | 一个A记录定义了一个IP地址，它存储32bit的二进制数 | AAAA IPv6地址 (Type 28) | 一个AAAA记录定义一个IPv6地址 | PTR (Type 12) | 指针记录用于指针查询。IP地址被看作是in-addr.arpa域下的一个域名（标识符串） | CNAME 规范名字(canonical name) (Type 5) | 别名alias | HINFO 主机信息(Type 13) | 主机CPU和操作系统 | MX 邮件交换 (Type 15) | 16bit整数优先值，以及域名 | 如果一个目的主机有多个MX项，按优先值由小到大顺序使用 | NS名字服务器(Type 2) | 说明域的权威名字服务器
+
+=== Slide 26 ===
+Title: 报文例（RFC1034 6.2.1）
+[1] QNAME=SRI-NIC.ARPA, QTYPE=A | | +---------------------------------------------------+ | Header | OPCODE=SQUERY, RESPONSE, AA | | +---------------------------------------------------+ | Question | QNAME=SRI-NIC.ARPA., QCLASS=IN, QTYPE=A | | +---------------------------------------------------+ | Answer | SRI-NIC.ARPA. 86400 IN A 26.0.0.73 | | | 86400 IN A 10.0.0.51 | | +---------------------------------------------------+ | Authority | <empty> | | +---------------------------------------------------+ | Additional | <empty> | | +---------------------------------------------------+
+
+=== Slide 27 ===
+Title: 报文例（RFC1034 6.2.7）
+[1] QNAME=USC-ISIC.ARPA, QTYPE=A | | +---------------------------------------------------+ | Header | OPCODE=SQUERY, RESPONSE, AA | | +---------------------------------------------------+ | Question | QNAME=USC-ISIC.ARPA., QCLASS=IN, QTYPE=A | | +---------------------------------------------------+ | Answer | USC-ISIC.ARPA. 86400 IN CNAME C.ISI.EDU. | | +---------------------------------------------------+ | Authority | ISI.EDU. 172800 IN NS VAXA.ISI.EDU. | | | NS A.ISI.EDU. | | | NS VENERA.ISI.EDU. | | +---------------------------------------------------+ | Additional | VAXA.ISI.EDU. 172800 A 10.2.0.27 | | | 172800 A 128.9.0.33 | | | VENERA.ISI.EDU. 172800 A 10.1.0.52 | | | 172800 A 128.9.0.32 | | | A.ISI.EDU. 172800 A 26.3.0.103 | | +---------------------------------------------------+ |
+
+=== Slide 28 ===
+Title: 相关资料
+[1] Socket编程(自己查找相应文献) | RFC1305协议文本 | http://en.wikipedia.org/wiki/Domain_Name_System | 软件工具WireShark | | |
+
+=== Slide 29 ===
+Title: 程序的设计和运行
+[1] 
+
+=== Slide 30 ===
+Title: Socket编程方面的小问题
+[1] 为使用winsock函数库，vc编程增加下面语句： | #pragma comment(lib,"Ws2_32.lib") | 也可以不加此语句，但链接时必须增加wsock32.lib库 | UDP接收/发送数据报，使用recvfrom/sendto函数 | 字节顺序 | CPU字节顺序 | Big Endian (大尾) | Power PC，SPARC，Motorola | Little Endian (小尾) | Intel X86 | 网络字节顺序 | 与X86相反 | 网络字节转换的库函数 | htonl ntohl 四字节整数(long) | htons ntohs 两字节整数(short)
+Notes: Big Endian：比如2字节整数，低位字节在前，高位字节在后。 | Little Endian：比如2字节整数，低位字节在后，高位字节在前，直观。 |
+
+=== Slide 31 ===
+Title: Windows系统DNS中继服务器运行
+[1] 运行步骤 | 使用ipconfig/all,记下当前DNS服务器 | 例如为202.106.0.20 | 使用下页的配置界面，将DNS设置为127.0.0.1(本地主机) | 运行你的dnsrelay程序(在你的程序中把外部dns服务器设为前面记下的202.106.0.20) | 正常使用ping，ftp，IE等，名字解析工作正常 | 局域网上的其他计算机（Windows或Linux）将域名服务器指向DNS中继服务器的IP地址，ftp, IE等均能正常工作 | 其它命令 | nslookup www.bupt.edu.cn | 向名字服务器询问名字www.bupt.edu.cn的地址 | ipconfig/displaydns | 察看当前dns cache的内容以确认程序执行结果的正确性 | ipconfig/flushdns | 清除dns cache中缓存的所有DNS记录
+
+=== Slide 32 ===
+Title: 将DNS服务器指向本地自设计的程序
+Notes: 同时要禁用IP v6,不然会走ip v6的DNS解析。
+Images: 1
+
+=== Slide 33 ===
+Title: 所设计的程序必须要考虑的两个问题
+[1] 多客户端并发 | 允许多个客户端（可能会位于不同的多个计算机）的并发查询，即：允许第一个查询尚未得到答案前就启动处理另外一个客户端查询请求（DNS协议头中ID字段的作用） | 超时处理 | 由于UDP的不可靠性，考虑求助外部DNS服务器（中继）却不能得到应答或者收到迟到应答的情形
+
+=== Slide 34 ===
+Title: ID转换问题
+[1] Q1457:Question (ID 1457) | R1457:Response (ID 1457)
+
+=== Slide 35 ===
+Title: 参考实现
+[1] 
+
+=== Slide 36 ===
+Title: 参考实现
+[1] 命令语法 | dnsrelay [-d | -dd] [dns-server-ipaddr] [filename] | dnsrelay | 无调试信息输出 | 使用默认名字服务器202.106.0.20 | 使用默认配置文件(当前目录下dnsrelay.txt) | dnsrelay –d 192.168.0.1 c:\dns-table.txt | 调试信息级别1（仅输出时间坐标，序号，客户端IP地址，查询的域名) | 使用指定的名字服务器192.168.0.1 | 使用指定的配置文件c:\dns-table.txt | dnsrelay –dd 202.99.96.68 | 调试信息级别2(输出冗长的调试信息) | 使用指定的名字服务器202.99.96.68 | 使用默认配置文件(当前目录下dnsrelay.txt)
+Notes: 可禁止ipv6，将网络适配器上的ipv6选项禁用，防止使用ipv6的DNS。 | |
