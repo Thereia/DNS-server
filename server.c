@@ -1,9 +1,28 @@
 #include "server.h"
 #include "common.h"
+#include "dns_packet.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <ws2tcpip.h>
+
+/* 打印前几个字节，便于确认真实收到的报文长什么样。 */
+static void print_hex_preview(const unsigned char *buffer, int length) {
+    int i;
+    int preview_len = length < 16 ? length : 16;
+
+    printf("hex=");
+    for (i = 0; i < preview_len; ++i) {
+        printf("%02X", buffer[i]);
+        if (i + 1 < preview_len) {
+            printf(" ");
+        }
+    }
+
+    if (length > preview_len) {
+        printf(" ...");
+    }
+}
 
 int server_run(const char *listen_ip, unsigned short listen_port) {
     /* sock 是本程序用于监听的 UDP socket。 */
@@ -14,24 +33,24 @@ int server_run(const char *listen_ip, unsigned short listen_port) {
     struct sockaddr_in client_addr;
     int client_len;
 
-    /* buffer 每次保存一个收到的 UDP 数据报。 */
+    // buffer 每次保存一个收到的 UDP 数据报
     char buffer[DNSRELAY_BUFFER_SIZE];
     char client_ip[INET_ADDRSTRLEN];
 
-    /* 创建一个 IPv4 + UDP 的 socket。 */
+    // 创建一个 IPv4 + UDP 的 socket
     sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (sock == INVALID_SOCKET) {
         fprintf(stderr, "socket failed: %d\n", WSAGetLastError());
         return 1;
     }
 
-    /* 填好本地监听地址。 */
-    memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(listen_port);
-    addr.sin_addr.s_addr = inet_addr(listen_ip);
+    // 填好本地监听地址
+    memset(&addr, 0, sizeof(addr)); // 把结构体清零，避免里面有垃圾数据
+    addr.sin_family = AF_INET;  // IPv4 
+    addr.sin_port = htons(listen_port); // 把正在监听的端口的主机字节序转换成网络字节序
+    addr.sin_addr.s_addr = inet_addr(listen_ip);    // 把正在监听的 IP 转成网络字节序的整数形式
     if (addr.sin_addr.s_addr == INADDR_NONE) {
-        fprintf(stderr, "invalid listen ip: %s\n", listen_ip);
+        fprintf(stderr, "invalid IP address: %s\n", listen_ip);
         closesocket(sock);
         return 1;
     }
@@ -53,6 +72,7 @@ int server_run(const char *listen_ip, unsigned short listen_port) {
      * 收到以后先打印来源信息；
      * 然后继续等下一个包。 */
     for (;;) {
+        DnsQuestion question;
         int received;
 
         client_len = sizeof(client_addr);
@@ -66,9 +86,28 @@ int server_run(const char *listen_ip, unsigned short listen_port) {
         strncpy(client_ip, inet_ntoa(client_addr.sin_addr), sizeof(client_ip) - 1);
         client_ip[sizeof(client_ip) - 1] = '\0';
 
-        /* 当前阶段只证明“包确实收到了”。
-         * 后面真正做 DNS 时，这里才会继续解析报文内容。 */
-        printf("received %d bytes from %s:%u\n", received, client_ip, ntohs(client_addr.sin_port));
+        /* 第三阶段开始尝试把收到的内容按 DNS 查询来解析。
+         * 先确认“确实收到包”，再区分是否解析成功。 */
+        if (dns_parse_question((const unsigned char *)buffer, received, &question) == 0) {
+            printf(
+                "received %d bytes from %s:%u, dns id=%u, qname=%s, qtype=%u, ",
+                received,
+                client_ip,
+                ntohs(client_addr.sin_port),
+                question.id,
+                question.qname,
+                question.qtype
+            );
+            print_hex_preview((const unsigned char *)buffer, received);
+            printf("\n");
+        } else {
+            printf("received %d bytes from %s:%u, non-dns-or-unparsed packet, ",
+                   received,
+                   client_ip,
+                   ntohs(client_addr.sin_port));
+            print_hex_preview((const unsigned char *)buffer, received);
+            printf("\n");
+        }
         fflush(stdout);
     }
 
