@@ -15,7 +15,7 @@ unsigned short dns_read_id(const unsigned char *packet, int packet_len) {
     return read_u16(packet);
 }
 
-int dns_parse_question(const unsigned char *packet, int packet_len, DnsQuestion *out_question) {
+int dns_parse_question(const unsigned char *packet, int packet_len, DnsRequestInfo *out_request_info) {
     int pos = 12;
     int out_pos = 0;
 
@@ -23,9 +23,9 @@ int dns_parse_question(const unsigned char *packet, int packet_len, DnsQuestion 
         return 1;
     }
 
-    memset(out_question, 0, sizeof(*out_question));
-    out_question->id = read_u16(packet);
-    out_question->flags = read_u16(packet + 2);
+    memset(out_request_info, 0, sizeof(*out_request_info));
+    out_request_info->id = read_u16(packet);
+    out_request_info->flags = read_u16(packet + 2);
 
     /* DNS 头后面先是 QNAME。
      * 它不是普通字符串，而是“长度 + 标签”的形式。 */
@@ -41,7 +41,7 @@ int dns_parse_question(const unsigned char *packet, int packet_len, DnsQuestion 
             if (out_pos >= DNS_MAX_NAME_LEN) {
                 return 1;
             }
-            out_question->qname[out_pos++] = '.';
+            out_request_info->qname[out_pos++] = '.';
         }
 
         if (out_pos + (int)label_len > DNS_MAX_NAME_LEN) {
@@ -49,7 +49,7 @@ int dns_parse_question(const unsigned char *packet, int packet_len, DnsQuestion 
         }
 
         for (i = 0; i < label_len; ++i) {
-            out_question->qname[out_pos++] = (char)packet[pos++];
+            out_request_info->qname[out_pos++] = (char)packet[pos++];
         }
     }
 
@@ -61,9 +61,9 @@ int dns_parse_question(const unsigned char *packet, int packet_len, DnsQuestion 
         return 1;
     }
 
-    out_question->qname[out_pos] = '\0';
+    out_request_info->qname[out_pos] = '\0';
     pos++;
-    out_question->qtype = read_u16(packet + pos);
-    out_question->qclass = read_u16(packet + pos + 2);
+    out_request_info->qtype = read_u16(packet + pos);
+    out_request_info->qclass = read_u16(packet + pos + 2);
     return 0;
 }

@@ -14,12 +14,12 @@ int main(void) {
         0x00, 0x01,
         0x00, 0x01
     };
-    DnsQuestion question;
+    DnsRequestInfo request_info;
 
-    assert(dns_parse_question(packet, sizeof(packet), &question) == 0);
-    assert(question.id == 0x1234);
-    assert(strcmp(question.qname, "www.google.com") == 0);
-    assert(question.qtype == 1);
-    assert(question.qclass == 1);
+    assert(dns_parse_question(packet, sizeof(packet), &request_info) == 0);
+    assert(request_info.id == 0x1234);
+    assert(strcmp(request_info.qname, "www.google.com") == 0);
+    assert(request_info.qtype == 1);
+    assert(request_info.qclass == 1);
     return 0;
 }

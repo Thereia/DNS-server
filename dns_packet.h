@@ -3,16 +3,17 @@
 
 #define DNS_MAX_NAME_LEN 255
 
-/* 当前阶段只关心 DNS 查询里最基本的几个字段。 */
-typedef struct DnsQuestion {
+/* 这个结构体保存“当前阶段我们关心的一次 DNS 请求信息”，
+ * 包括报头里的少数字段，以及 Question 里的域名/类型/类。 */
+typedef struct DnsRequestInfo {
     unsigned short id;
     unsigned short flags;
     unsigned short qtype;
     unsigned short qclass;
     char qname[DNS_MAX_NAME_LEN + 1];
-} DnsQuestion;
+} DnsRequestInfo;
 
-int dns_parse_question(const unsigned char *packet, int packet_len, DnsQuestion *out_question);
+int dns_parse_question(const unsigned char *packet, int packet_len, DnsRequestInfo *out_request_info);
 unsigned short dns_read_id(const unsigned char *packet, int packet_len);
 
 #endif

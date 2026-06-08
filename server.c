@@ -72,7 +72,7 @@ int server_run(const char *listen_ip, unsigned short listen_port) {
      * 收到以后先打印来源信息；
      * 然后继续等下一个包。 */
     for (;;) {
-        DnsQuestion question;
+        DnsRequestInfo request_info;
         int received;
 
         client_len = sizeof(client_addr);
@@ -88,15 +88,15 @@ int server_run(const char *listen_ip, unsigned short listen_port) {
 
         /* 第三阶段开始尝试把收到的内容按 DNS 查询来解析。
          * 先确认“确实收到包”，再区分是否解析成功。 */
-        if (dns_parse_question((const unsigned char *)buffer, received, &question) == 0) {
+        if (dns_parse_question((const unsigned char *)buffer, received, &request_info) == 0) {
             printf(
                 "received %d bytes from %s:%u, dns id=%u, qname=%s, qtype=%u, ",
                 received,
                 client_ip,
                 ntohs(client_addr.sin_port),
-                question.id,
-                question.qname,
-                question.qtype
+                request_info.id,
+                request_info.qname,
+                request_info.qtype
             );
             print_hex_preview((const unsigned char *)buffer, received);
             printf("\n");
