@@ -10,4 +10,9 @@
  * 后面做 DNS 报文解析时，也仍然是“一次收一个 UDP 包”。 */
 #define DNSRELAY_BUFFER_SIZE 1024
 
+/* 第五阶段先使用一个固定上游 DNS，打通最小转发链路。 */
+#define DNSRELAY_UPSTREAM_DNS "8.8.8.8"
+#define DNSRELAY_UPSTREAM_PORT 53
+#define DNSRELAY_RELAY_TIMEOUT_MS 5000
+
 #endif

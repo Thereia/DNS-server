@@ -15,6 +15,7 @@ typedef struct DnsRequestInfo {
 
 int dns_parse_question(const unsigned char *packet, int packet_len, DnsRequestInfo *out_request_info);
 unsigned short dns_read_id(const unsigned char *packet, int packet_len);
+int dns_set_id(unsigned char *packet, int packet_len, unsigned short new_id);
 int dns_build_a_response(
     const unsigned char *request,
     int request_len,

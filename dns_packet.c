@@ -16,6 +16,16 @@ unsigned short dns_read_id(const unsigned char *packet, int packet_len) {
     return read_u16(packet);
 }
 
+int dns_set_id(unsigned char *packet, int packet_len, unsigned short new_id) {
+    if (packet_len < 2) {
+        return 1;
+    }
+
+    packet[0] = (unsigned char)((new_id >> 8) & 0xFF);
+    packet[1] = (unsigned char)(new_id & 0xFF);
+    return 0;
+}
+
 int dns_build_a_response(
     const unsigned char *request,
     int request_len,

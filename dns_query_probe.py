@@ -27,6 +27,9 @@ def main() -> int:
     except dns.exception.Timeout:
         print("timeout")
         return 1
+    except Exception as exc:
+        print(f"error: {exc}")
+        return 1
 
     return 0
 
