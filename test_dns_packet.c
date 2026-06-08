@@ -21,5 +21,34 @@ int main(void) {
     assert(strcmp(request_info.qname, "www.google.com") == 0);
     assert(request_info.qtype == 1);
     assert(request_info.qclass == 1);
+
+    {
+        unsigned char response[512];
+        int response_len = 0;
+
+        assert(dns_build_a_response(packet, sizeof(packet), "1.2.3.4", response, sizeof(response), &response_len) == 0);
+        assert(response_len > (int)sizeof(packet));
+        assert(response[0] == 0x12);
+        assert(response[1] == 0x34);
+        assert(response[2] == 0x81);
+        assert(response[3] == 0x80);
+        assert(response[6] == 0x00);
+        assert(response[7] == 0x01);
+    }
+
+    {
+        unsigned char response[512];
+        int response_len = 0;
+
+        assert(dns_build_nxdomain_response(packet, sizeof(packet), response, sizeof(response), &response_len) == 0);
+        assert(response_len == (int)sizeof(packet));
+        assert(response[0] == 0x12);
+        assert(response[1] == 0x34);
+        assert(response[2] == 0x81);
+        assert(response[3] == 0x83);
+        assert(response[6] == 0x00);
+        assert(response[7] == 0x00);
+    }
+
     return 0;
 }

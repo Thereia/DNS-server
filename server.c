@@ -24,7 +24,7 @@ static void print_hex_preview(const unsigned char *buffer, int length) {
     }
 }
 
-int server_run(const char *listen_ip, unsigned short listen_port) {
+int server_run(const char *listen_ip, unsigned short listen_port, const HostsTable *hosts_table) {
     /* sock 是本程序用于监听的 UDP socket。 */
     SOCKET sock = INVALID_SOCKET;
 
@@ -72,6 +72,9 @@ int server_run(const char *listen_ip, unsigned short listen_port) {
      * 收到以后先打印来源信息；
      * 然后继续等下一个包。 */
     for (;;) {
+        const HostRecord *record;
+        unsigned char response[512];
+        int response_len;
         DnsRequestInfo request_info;
         int received;
 
@@ -89,6 +92,55 @@ int server_run(const char *listen_ip, unsigned short listen_port) {
         /* 第三阶段开始尝试把收到的内容按 DNS 查询来解析。
          * 先确认“确实收到包”，再区分是否解析成功。 */
         if (dns_parse_question((const unsigned char *)buffer, received, &request_info) == 0) {
+            /* 第四阶段先实现最基本的本地命中：
+             * 如果本地表里能找到普通 IP，就直接回 A 记录响应；
+             * 如果命中 0.0.0.0，就回 NXDOMAIN。 */
+            record = hosts_find(hosts_table, request_info.qname);
+            if (record != NULL) {
+                int build_ok;
+
+                if (record->is_blocked) {
+                    build_ok = dns_build_nxdomain_response(
+                        (const unsigned char *)buffer,
+                        received,
+                        response,
+                        sizeof(response),
+                        &response_len
+                    ) == 0;
+                } else {
+                    build_ok = dns_build_a_response(
+                        (const unsigned char *)buffer,
+                        received,
+                        record->ip_text,
+                        response,
+                        sizeof(response),
+                        &response_len
+                    ) == 0;
+                }
+
+                if (build_ok) {
+                    sendto(
+                        sock,
+                        (const char *)response,
+                        response_len,
+                        0,
+                        (const struct sockaddr *)&client_addr,
+                        client_len
+                    );
+                    printf(
+                        "received %d bytes from %s:%u, qname=%s, local %s=%s\n",
+                        received,
+                        client_ip,
+                        ntohs(client_addr.sin_port),
+                        request_info.qname,
+                        record->is_blocked ? "block" : "hit",
+                        record->ip_text
+                    );
+                    fflush(stdout);
+                    continue;
+                }
+            }
+
             printf(
                 "received %d bytes from %s:%u, dns id=%u, qname=%s, qtype=%u, ",
                 received,

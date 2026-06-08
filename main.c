@@ -37,7 +37,7 @@ int main(void) {
     }
 
     /* 真正的 UDP 监听和收包逻辑放在 server.c 里。 */
-    exit_code = server_run(listen_ip, listen_port);
+    exit_code = server_run(listen_ip, listen_port, &hosts_table);
 
     hosts_free(&hosts_table);
 
